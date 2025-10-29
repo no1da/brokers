@@ -1,36 +1,28 @@
 package org.example;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.*;
+
+import java.nio.charset.StandardCharsets;
 
 public class Receive {
-    private final static String QUEUE_NAME = "task_queue";
-    private final static String QUEUE_NAME_INFO = "info_logs";
-    private final static String QUEUE_NAME_ERROR = "error_logs";
+    private final static boolean DURABLE = true;
 
-    public static void main(String[] argv) throws Exception {
+    public String receiveMessage(String queueName) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         factory.setPort(5672);
         factory.setUsername("guest");
         factory.setPassword("guest");
 
-        Connection connection = factory.newConnection();
-        Channel channel = connection.createChannel();
+        try (Connection connection = factory.newConnection();
+             Channel channel = connection.createChannel()) {
+            channel.queueDeclare(queueName, DURABLE, false, false, null);
 
-        boolean durable = true;
-        channel.queueDeclare(QUEUE_NAME, durable, false, false, null);
-
-        System.out.println("Ожидание сообщений.");
-
-        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String message = new String(delivery.getBody(), "UTF-8");
-            System.out.println("Получено: '" + message + "'");
-        };
-
-        boolean autoAck = true;
-        channel.basicConsume(QUEUE_NAME, autoAck, deliverCallback, consumerTag -> { });
+            GetResponse response = channel.basicGet(queueName, true);
+            if (response == null) {
+                return null;
+            }
+            return new String(response.getBody(), StandardCharsets.UTF_8);
+        }
     }
 }
