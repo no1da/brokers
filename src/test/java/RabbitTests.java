@@ -7,6 +7,7 @@ import org.testng.annotations.Test;
 public class RabbitTests {
     private static final String QUEUE_NAME = "task_queue";
     private static final String TEST_MESSAGE = "Hello RabbitMQ";
+    private static final Integer TIMEOUT = 3000;
     private Send sender;
     private Receive receiver;
 
@@ -19,7 +20,7 @@ public class RabbitTests {
     @Test
     public void testSendAndReceiveMessage() throws Exception {
         sender.sendMessage(TEST_MESSAGE, QUEUE_NAME);
-        String received = pollMessageWithTimeout(QUEUE_NAME, 3000);
+        String received = pollMessageWithTimeout(QUEUE_NAME, TIMEOUT);
         Assert.assertNotNull(received, "Сообщение должно быть получено");
         Assert.assertEquals(received, TEST_MESSAGE);
     }
